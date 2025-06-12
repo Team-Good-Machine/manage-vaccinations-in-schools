@@ -1,0 +1,24 @@
+name: Sync upstream
+
+on:
+  schedule:
+    # Run every night at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync fork with upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync fork
+        uses: tgymnich/fork-sync@v2.0.10
+        with:
+          token: ${{ secrets.FORK_SYNC_TOKEN }}
+          owner: nhsuk
+          repo: manage-vaccinations-in-schools
+          base: main    # our default branch
+          head: main    # upstream default branch
+          merge_method: merge
+          pr_title: 'chore: sync upstream'
+          pr_message: 'Automated sync of fork with upstream repository.'
