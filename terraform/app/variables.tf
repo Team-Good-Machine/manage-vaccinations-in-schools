@@ -77,9 +77,6 @@ locals {
 variable "resource_name" {
   type = object(
     {
-      dbsubnet_group           = string
-      db_cluster               = string
-      db_instance              = string
       rds_security_group       = string
       loadbalancer             = string
       lb_security_group        = string
@@ -180,11 +177,11 @@ locals {
   task_envs = [
     {
       name  = "DB_HOST"
-      value = aws_rds_cluster.aurora_cluster.endpoint
+      value = aws_rds_cluster.core.endpoint
     },
     {
       name  = "DB_NAME"
-      value = aws_rds_cluster.aurora_cluster.database_name
+      value = aws_rds_cluster.core.database_name
     },
     {
       name  = "RAILS_ENV"
@@ -217,8 +214,8 @@ locals {
   ]
   task_secrets = concat([
     {
-      name      = var.db_secret_arn == null ? "DB_CREDENTIALS" : "DB_SECRET"
-      valueFrom = var.db_secret_arn == null ? aws_rds_cluster.aurora_cluster.master_user_secret[0].secret_arn : var.db_secret_arn
+      name      = "DB_CREDENTIALS"
+      valueFrom = aws_rds_cluster.core.master_user_secret[0].secret_arn
     },
     {
       name      = "RAILS_MASTER_KEY"
@@ -228,11 +225,6 @@ locals {
 }
 
 ########## RDS configuration ##########
-
-variable "db_secret_arn" {
-  type        = string
-  description = "The ARN of the secret containing the DB credentials."
-}
 
 variable "backup_retention_period" {
   type        = number
@@ -247,7 +239,18 @@ variable "enable_backup_to_vault" {
   nullable    = false
 }
 
-########## ESC/Scaling Configuration ##########
+locals {
+  db_instances = {
+    "primary-1" = {
+      promotion_tier = 1
+    },
+    "primary-2" = {
+      promotion_tier = 1
+    }
+  }
+}
+
+########## ECS/Scaling Configuration ##########
 
 variable "container_insights" {
   default     = "enabled"
